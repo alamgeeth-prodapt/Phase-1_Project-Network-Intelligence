@@ -1,0 +1,20 @@
+{
+  "artifact": "network_alerts",
+  "schema_version": "1.0",
+  "generated_at": "2026-08-28T06:57:44.655708+00:00",
+  "config": {
+    "HIGH_ACTIVITY_MULTIPLIER": 2.0,
+    "DROP_ACTIVITY_MULTIPLIER": 0.5,
+    "SPIKE_MULTIPLIER": 3.0,
+    "floor_percentile": 5,
+    "floor_value": 660.6272,
+    "hourly_floor_value": 27.526133333333334
+  },
+  "files": {
+    "alerts": "network_alerts.json",
+    "summary": "alert_summary.json",
+    "limitations": "baseline_limitations.md"
+  },
+  "total_grid_hours": 1679994,
+  "total_alerts": 331257
+}

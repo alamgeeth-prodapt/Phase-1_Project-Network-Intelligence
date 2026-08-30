@@ -1,0 +1,108 @@
+2026-08-28 06:47:02,794 - INFO - file has been loaded as CSV (1891928 rows)
+2026-08-28 06:47:03,584 - INFO - Dropped 0 rows due to missing timestamp/grid_id
+2026-08-28 06:47:03,618 - INFO - 1658462 rows had blank activity measure(s); filling with 0
+2026-08-28 06:47:03,743 - INFO - Null activity values filled with 0
+2026-08-28 06:47:05,714 - INFO - Dropped 0 exact duplicate rows
+2026-08-28 06:47:05,714 - INFO - Rows after cleaning: 1891928
+2026-08-28 06:47:05,749 - INFO - Cadence verified: 24 distinct hourly timestamps, all 1 hour apart
+2026-08-28 06:47:06,553 - INFO - derived date, hour, day_of_week
+2026-08-28 06:47:06,778 - INFO - Grain check: avg 7.88 and max 65 country-code rows per (timestamp, grid_id) -> raw grain is timestamp + grid_id + country_code = True
+2026-08-28 06:47:07,293 - INFO - Aggregated 1891928 raw records into 240000 grid-hour records (country_code collapsed out)
+2026-08-28 06:47:07,300 - INFO - Derived total_sms, total_calls and total_activity
+2026-08-28 06:47:07,536 - INFO - Computed 20 KPI fields
+2026-08-28 06:47:27,023 - INFO - Cleaned data exported to processed\cleaned\sms-call-internet-mi-2013-11-01_cleaned_data.csv
+2026-08-28 06:47:27,024 - INFO - Grid-hour data exported to processed\grid_hour\sms-call-internet-mi-2013-11-01_grid_hour.csv
+2026-08-28 06:47:27,024 - INFO - KPIs exported to processed\kpis\sms-call-internet-mi-2013-11-01_kpis.json
+2026-08-28 06:47:28,927 - INFO - file has been loaded as CSV (1847331 rows)
+2026-08-28 06:47:29,730 - INFO - Dropped 0 rows due to missing timestamp/grid_id
+2026-08-28 06:47:29,763 - INFO - 1622950 rows had blank activity measure(s); filling with 0
+2026-08-28 06:47:29,893 - INFO - Null activity values filled with 0
+2026-08-28 06:47:31,780 - INFO - Dropped 0 exact duplicate rows
+2026-08-28 06:47:31,781 - INFO - Rows after cleaning: 1847331
+2026-08-28 06:47:31,813 - INFO - Cadence verified: 24 distinct hourly timestamps, all 1 hour apart
+2026-08-28 06:47:32,323 - INFO - derived date, hour, day_of_week
+2026-08-28 06:47:32,510 - INFO - Grain check: avg 7.70 and max 60 country-code rows per (timestamp, grid_id) -> raw grain is timestamp + grid_id + country_code = True
+2026-08-28 06:47:32,886 - INFO - Aggregated 1847331 raw records into 240000 grid-hour records (country_code collapsed out)
+2026-08-28 06:47:32,894 - INFO - Derived total_sms, total_calls and total_activity
+2026-08-28 06:47:33,102 - INFO - Computed 20 KPI fields
+2026-08-28 06:47:45,576 - INFO - Cleaned data exported to processed\cleaned\sms-call-internet-mi-2013-11-02_cleaned_data.csv
+2026-08-28 06:47:45,577 - INFO - Grid-hour data exported to processed\grid_hour\sms-call-internet-mi-2013-11-02_grid_hour.csv
+2026-08-28 06:47:45,577 - INFO - KPIs exported to processed\kpis\sms-call-internet-mi-2013-11-02_kpis.json
+2026-08-28 06:47:47,326 - INFO - file has been loaded as CSV (1828063 rows)
+2026-08-28 06:47:48,101 - INFO - Dropped 0 rows due to missing timestamp/grid_id
+2026-08-28 06:47:48,133 - INFO - 1602523 rows had blank activity measure(s); filling with 0
+2026-08-28 06:47:48,273 - INFO - Null activity values filled with 0
+2026-08-28 06:47:50,226 - INFO - Dropped 0 exact duplicate rows
+2026-08-28 06:47:50,227 - INFO - Rows after cleaning: 1828063
+2026-08-28 06:47:50,250 - INFO - Cadence verified: 24 distinct hourly timestamps, all 1 hour apart
+2026-08-28 06:47:50,855 - INFO - derived date, hour, day_of_week
+2026-08-28 06:47:51,065 - INFO - Grain check: avg 7.62 and max 56 country-code rows per (timestamp, grid_id) -> raw grain is timestamp + grid_id + country_code = True
+2026-08-28 06:47:51,417 - INFO - Aggregated 1828063 raw records into 239999 grid-hour records (country_code collapsed out)
+2026-08-28 06:47:51,425 - INFO - Derived total_sms, total_calls and total_activity
+2026-08-28 06:47:51,629 - INFO - Computed 20 KPI fields
+2026-08-28 06:48:07,152 - INFO - Cleaned data exported to processed\cleaned\sms-call-internet-mi-2013-11-03_cleaned_data.csv
+2026-08-28 06:48:07,152 - INFO - Grid-hour data exported to processed\grid_hour\sms-call-internet-mi-2013-11-03_grid_hour.csv
+2026-08-28 06:48:07,153 - INFO - KPIs exported to processed\kpis\sms-call-internet-mi-2013-11-03_kpis.json
+2026-08-28 06:48:09,569 - INFO - file has been loaded as CSV (2299544 rows)
+2026-08-28 06:48:10,516 - INFO - Dropped 0 rows due to missing timestamp/grid_id
+2026-08-28 06:48:10,554 - INFO - 2071763 rows had blank activity measure(s); filling with 0
+2026-08-28 06:48:10,716 - INFO - Null activity values filled with 0
+2026-08-28 06:48:12,803 - INFO - Dropped 0 exact duplicate rows
+2026-08-28 06:48:12,803 - INFO - Rows after cleaning: 2299544
+2026-08-28 06:48:12,832 - INFO - Cadence verified: 24 distinct hourly timestamps, all 1 hour apart
+2026-08-28 06:48:13,608 - INFO - derived date, hour, day_of_week
+2026-08-28 06:48:13,826 - INFO - Grain check: avg 9.58 and max 62 country-code rows per (timestamp, grid_id) -> raw grain is timestamp + grid_id + country_code = True
+2026-08-28 06:48:14,271 - INFO - Aggregated 2299544 raw records into 239999 grid-hour records (country_code collapsed out)
+2026-08-28 06:48:14,278 - INFO - Derived total_sms, total_calls and total_activity
+2026-08-28 06:48:14,509 - INFO - Computed 20 KPI fields
+2026-08-28 06:48:30,760 - INFO - Cleaned data exported to processed\cleaned\sms-call-internet-mi-2013-11-04_cleaned_data.csv
+2026-08-28 06:48:30,761 - INFO - Grid-hour data exported to processed\grid_hour\sms-call-internet-mi-2013-11-04_grid_hour.csv
+2026-08-28 06:48:30,762 - INFO - KPIs exported to processed\kpis\sms-call-internet-mi-2013-11-04_kpis.json
+2026-08-28 06:48:33,102 - INFO - file has been loaded as CSV (2397759 rows)
+2026-08-28 06:48:34,067 - INFO - Dropped 0 rows due to missing timestamp/grid_id
+2026-08-28 06:48:34,107 - INFO - 2166696 rows had blank activity measure(s); filling with 0
+2026-08-28 06:48:34,297 - INFO - Null activity values filled with 0
+2026-08-28 06:48:36,198 - INFO - Dropped 0 exact duplicate rows
+2026-08-28 06:48:36,199 - INFO - Rows after cleaning: 2397759
+2026-08-28 06:48:36,227 - INFO - Cadence verified: 24 distinct hourly timestamps, all 1 hour apart
+2026-08-28 06:48:36,945 - INFO - derived date, hour, day_of_week
+2026-08-28 06:48:37,141 - INFO - Grain check: avg 9.99 and max 67 country-code rows per (timestamp, grid_id) -> raw grain is timestamp + grid_id + country_code = True
+2026-08-28 06:48:37,548 - INFO - Aggregated 2397759 raw records into 239999 grid-hour records (country_code collapsed out)
+2026-08-28 06:48:37,556 - INFO - Derived total_sms, total_calls and total_activity
+2026-08-28 06:48:37,808 - INFO - Computed 20 KPI fields
+2026-08-28 06:48:56,546 - INFO - Cleaned data exported to processed\cleaned\sms-call-internet-mi-2013-11-05_cleaned_data.csv
+2026-08-28 06:48:56,548 - INFO - Grid-hour data exported to processed\grid_hour\sms-call-internet-mi-2013-11-05_grid_hour.csv
+2026-08-28 06:48:56,549 - INFO - KPIs exported to processed\kpis\sms-call-internet-mi-2013-11-05_kpis.json
+2026-08-28 06:48:58,769 - INFO - file has been loaded as CSV (2417156 rows)
+2026-08-28 06:48:59,815 - INFO - Dropped 0 rows due to missing timestamp/grid_id
+2026-08-28 06:48:59,854 - INFO - 2185728 rows had blank activity measure(s); filling with 0
+2026-08-28 06:49:00,034 - INFO - Null activity values filled with 0
+2026-08-28 06:49:02,028 - INFO - Dropped 0 exact duplicate rows
+2026-08-28 06:49:02,028 - INFO - Rows after cleaning: 2417156
+2026-08-28 06:49:02,059 - INFO - Cadence verified: 24 distinct hourly timestamps, all 1 hour apart
+2026-08-28 06:49:02,848 - INFO - derived date, hour, day_of_week
+2026-08-28 06:49:03,065 - INFO - Grain check: avg 10.07 and max 72 country-code rows per (timestamp, grid_id) -> raw grain is timestamp + grid_id + country_code = True
+2026-08-28 06:49:03,497 - INFO - Aggregated 2417156 raw records into 239998 grid-hour records (country_code collapsed out)
+2026-08-28 06:49:03,505 - INFO - Derived total_sms, total_calls and total_activity
+2026-08-28 06:49:03,772 - INFO - Computed 20 KPI fields
+2026-08-28 06:49:22,386 - INFO - Cleaned data exported to processed\cleaned\sms-call-internet-mi-2013-11-06_cleaned_data.csv
+2026-08-28 06:49:22,388 - INFO - Grid-hour data exported to processed\grid_hour\sms-call-internet-mi-2013-11-06_grid_hour.csv
+2026-08-28 06:49:22,388 - INFO - KPIs exported to processed\kpis\sms-call-internet-mi-2013-11-06_kpis.json
+2026-08-28 06:49:24,604 - INFO - file has been loaded as CSV (2407384 rows)
+2026-08-28 06:49:25,420 - INFO - Dropped 0 rows due to missing timestamp/grid_id
+2026-08-28 06:49:25,461 - INFO - 2178739 rows had blank activity measure(s); filling with 0
+2026-08-28 06:49:25,643 - INFO - Null activity values filled with 0
+2026-08-28 06:49:27,804 - INFO - Dropped 0 exact duplicate rows
+2026-08-28 06:49:27,805 - INFO - Rows after cleaning: 2407384
+2026-08-28 06:49:27,839 - INFO - Cadence verified: 24 distinct hourly timestamps, all 1 hour apart
+2026-08-28 06:49:28,444 - INFO - derived date, hour, day_of_week
+2026-08-28 06:49:28,654 - INFO - Grain check: avg 10.03 and max 71 country-code rows per (timestamp, grid_id) -> raw grain is timestamp + grid_id + country_code = True
+2026-08-28 06:49:29,076 - INFO - Aggregated 2407384 raw records into 239999 grid-hour records (country_code collapsed out)
+2026-08-28 06:49:29,082 - INFO - Derived total_sms, total_calls and total_activity
+2026-08-28 06:49:29,301 - INFO - Computed 20 KPI fields
+2026-08-28 06:49:44,202 - INFO - Cleaned data exported to processed\cleaned\sms-call-internet-mi-2013-11-07_cleaned_data.csv
+2026-08-28 06:49:44,202 - INFO - Grid-hour data exported to processed\grid_hour\sms-call-internet-mi-2013-11-07_grid_hour.csv
+2026-08-28 06:49:44,203 - INFO - KPIs exported to processed\kpis\sms-call-internet-mi-2013-11-07_kpis.json
+2026-08-28 06:49:44,844 - INFO - Combined daily summary (7 rows across 7 files) exported to processed\daily_summary\daily_summary.csv
+2026-08-28 06:49:44,844 - INFO - Combined grid summary (10000 rows across 7 files) exported to processed\grid_summary\grid_summary.csv
+2026-08-28 06:49:44,853 - INFO - Combined profiling summary (7 rows) exported to processed\profiling_summary\profiling_summary.csv

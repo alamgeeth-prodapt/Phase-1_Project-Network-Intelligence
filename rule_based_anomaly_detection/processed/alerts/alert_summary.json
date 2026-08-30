@@ -1,0 +1,61 @@
+{
+  "floor_percentile": 5,
+  "floor_value": 660.6272,
+  "hourly_floor_value": 27.526133333333334,
+  "total_grid_hours": 1679994,
+  "alerted_grid_hours": 330911,
+  "alerted_proportion": 0.19697153680310764,
+  "total_alert_records": 331257,
+  "alerts_by_type": {
+    "ACTIVITY_DROP": 292826,
+    "HIGH_ACTIVITY": 37499,
+    "ACTIVITY_SPIKE": 932
+  },
+  "top_10_grids_by_alert_count": [
+    {
+      "grid_id": 7724,
+      "alert_count": 162
+    },
+    {
+      "grid_id": 7822,
+      "alert_count": 158
+    },
+    {
+      "grid_id": 7823,
+      "alert_count": 155
+    },
+    {
+      "grid_id": 7725,
+      "alert_count": 153
+    },
+    {
+      "grid_id": 8169,
+      "alert_count": 151
+    },
+    {
+      "grid_id": 7824,
+      "alert_count": 150
+    },
+    {
+      "grid_id": 7626,
+      "alert_count": 149
+    },
+    {
+      "grid_id": 7625,
+      "alert_count": 147
+    },
+    {
+      "grid_id": 7723,
+      "alert_count": 147
+    },
+    {
+      "grid_id": 7624,
+      "alert_count": 146
+    }
+  ],
+  "rule_thresholds": {
+    "HIGH_ACTIVITY_MULTIPLIER": 2.0,
+    "DROP_ACTIVITY_MULTIPLIER": 0.5,
+    "SPIKE_MULTIPLIER": 3.0
+  }
+}

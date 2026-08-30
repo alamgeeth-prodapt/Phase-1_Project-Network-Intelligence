@@ -1,0 +1,33 @@
+2026-08-28 12:18:18,350 - INFO - Using provided DataFrame with 1679994 rows
+2026-08-28 12:18:19,146 - WARNING - 5 grid/day group(s) do not contain exactly 24 distinct hours (114 row(s) affected) - baseline_activity will be set to NaN for these and excluded from alerting.
+2026-08-28 12:18:26,723 - INFO - Calculated within-day leave-one-out median baselines.
+2026-08-28 12:18:27,350 - INFO - Activity floor set at the 5th percentile of grid-level daily total_activity = 660.6272 (hourly-scale equivalent for the spike guard = 27.5261). 3497 grid/day group(s) (83927 row(s)) fall below it and are excluded from alerting.
+2026-08-28 12:18:28,418 - INFO - Rules applied: HIGH_ACTIVITY=37499, ACTIVITY_DROP=292826, ACTIVITY_SPIKE=932 row(s) flagged.
+2026-08-28 12:18:47,368 - INFO - Generated 331257 alert record(s).
+2026-08-28 12:18:50,372 - INFO - Alerts exported to processed\alerts\weekly_alerts.csv
+============================================================
+ANOMALY DETECTION - OPERATIONAL SUMMARY
+============================================================
+
+Activity floor: 5th percentile of grid-level daily total_activity = 660.63
+
+Alerts by type:
+  ACTIVITY_DROP: 292826
+  HIGH_ACTIVITY: 37499
+  ACTIVITY_SPIKE: 932
+
+Top 10 grids by alert count:
+  grid 7724: 162 alert(s)
+  grid 7822: 158 alert(s)
+  grid 7823: 155 alert(s)
+  grid 7725: 153 alert(s)
+  grid 8169: 151 alert(s)
+  grid 7824: 150 alert(s)
+  grid 7626: 149 alert(s)
+  grid 7625: 147 alert(s)
+  grid 7723: 147 alert(s)
+  grid 7624: 146 alert(s)
+
+Grid/hours that alerted: 330911 / 1679994 (19.70%)
+============================================================
+2026-08-28 12:18:50,616 - INFO - Summary printed: 331257 alert(s) across 330911 grid/hour(s) (19.70% of 1679994).

@@ -1,0 +1,80 @@
+Files found:
+../data_set\sms-call-internet-mi-2013-11-01.csv
+../data_set\sms-call-internet-mi-2013-11-02.csv
+../data_set\sms-call-internet-mi-2013-11-03.csv
+../data_set\sms-call-internet-mi-2013-11-04.csv
+../data_set\sms-call-internet-mi-2013-11-05.csv
+../data_set\sms-call-internet-mi-2013-11-06.csv
+../data_set\sms-call-internet-mi-2013-11-07.csv
+                                                                                
+============================================================
+SP1 - SPARK INGESTION PROFILE
+============================================================
+
+--- SCHEMA ---
+root
+ |-- datetime: timestamp (nullable = true)
+ |-- CellID: integer (nullable = true)
+ |-- countrycode: integer (nullable = true)
+ |-- smsin: double (nullable = true)
+ |-- smsout: double (nullable = true)
+ |-- callin: double (nullable = true)
+ |-- callout: double (nullable = true)
+ |-- internet: double (nullable = true)
+
+
+--- TOTAL ROWS ---
+15089165                                                                        
+
+--- SOURCE FILES ---
++-----------------------------------------------------------------------+       
+|source_file                                                            |
++-----------------------------------------------------------------------+
+|file:///D:/phase_1_project/data_set/sms-call-internet-mi-2013-11-01.csv|
+|file:///D:/phase_1_project/data_set/sms-call-internet-mi-2013-11-02.csv|
+|file:///D:/phase_1_project/data_set/sms-call-internet-mi-2013-11-03.csv|
+|file:///D:/phase_1_project/data_set/sms-call-internet-mi-2013-11-04.csv|
+|file:///D:/phase_1_project/data_set/sms-call-internet-mi-2013-11-05.csv|
+|file:///D:/phase_1_project/data_set/sms-call-internet-mi-2013-11-06.csv|
+|file:///D:/phase_1_project/data_set/sms-call-internet-mi-2013-11-07.csv|
++-----------------------------------------------------------------------+
+
+
+--- UNIQUE GRIDS ---
+10000                                                                           
+
+--- COUNTRY CODE CATEGORIES ---
+326                                                                             
+
+--- COUNTRY CODE VALUES ---
++-----------+                                                                   
+|countrycode|
++-----------+
+|          0|
+|          1|
+|          7|
+|         20|
+|         27|
+|         30|
+|         31|
+|         32|
+|         33|
+|         34|
+|         36|
+|         39|
+|         40|
+|         41|
+|         43|
+|         44|
+|         45|
+|         46|
+|         47|
+|         48|
++-----------+
+only showing top 20 rows
+
+--- DISTINCT DATETIME VALUES ---
+168                                                                             
+
+--- PARTITIONS ---
+15
