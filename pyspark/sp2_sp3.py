@@ -14,6 +14,13 @@ from pyspark.sql.functions import (
     desc
 )
 
+import os
+
+os.environ["HADOOP_HOME"] = r"D:\hadoop"
+os.environ["PATH"] = r"D:\hadoop\bin;" + os.environ["PATH"]
+
+from pyspark.sql import SparkSession
+
 import glob
 import pandas as pd
 
@@ -762,7 +769,7 @@ class SparkCleaning:
             self.hourly_grid_summary,
             self.rejected_df,
             self.rejected_summary,
-            self.null_handling_report
+            self.null_handling_report,
         )
 
     # =============================================================
@@ -824,16 +831,25 @@ if __name__ == "__main__":
     files = glob.glob(INPUT_PATH)
 
     spark = (
-    SparkSession.builder
-    .appName("SP2_Cleaning")
-    .master("local[4]")
-    .config("spark.driver.memory", "4g")
-    .config("spark.sql.shuffle.partitions", "8")
-    .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2")
-    .config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem")
-    .getOrCreate()
+        SparkSession.builder
+        .appName("SP2_Cleaning")
+        .master("local[4]")
+        .config("spark.driver.memory", "4g")
+        .config("spark.sql.shuffle.partitions", "8")
+        .config("spark.driver.extraJavaOptions", "-Djava.library.path=")
+        .config("spark.hadoop.home.dir",r"D:\hadoop")
+        .getOrCreate()
     )
 
+    print(
+    "Hadoop version:",
+    spark.sparkContext._jvm.org.apache.hadoop.util.VersionInfo.getVersion()
+    )
+
+    print(
+        "Hadoop home:",
+        os.environ.get("HADOOP_HOME")
+    )
     # -------------------------------------------------------------
     # Load raw input files
     # -------------------------------------------------------------
@@ -875,7 +891,8 @@ if __name__ == "__main__":
     # clean_network_df.to_csv("./results/clean_network/clean.csv",index="False")
     # clean_network_df.write.mode("overwrite").option("header", True).csv("./results/clean_network/clean_csv")
     # clean_network_df.coalesce(1).write.mode("overwrite").option("header", True).csv("./results/clean_network/clean_csv")
-
+    clean_network_df.write.mode("overwrite").parquet("./results/clean_network/clean.parquet")
+    hourly_grid_summary.write.mode("overwrite").parquet("./results/hourly_grid_summary/hourly_grid_summary.parquet")
     # -------------------------------------------------------------
     # CANONICAL DOWNSTREAM ANALYTICS DATAFRAME
     # -------------------------------------------------------------
