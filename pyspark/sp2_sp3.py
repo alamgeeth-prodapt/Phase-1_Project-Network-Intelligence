@@ -836,7 +836,6 @@ if __name__ == "__main__":
         .master("local[4]")
         .config("spark.driver.memory", "4g")
         .config("spark.sql.shuffle.partitions", "8")
-        .config("spark.driver.extraJavaOptions", "-Djava.library.path=")
         .config("spark.hadoop.home.dir",r"D:\hadoop")
         .getOrCreate()
     )

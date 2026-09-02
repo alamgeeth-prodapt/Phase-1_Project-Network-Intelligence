@@ -1,119 +1,308 @@
+import json
+import os
+
 from pyspark.sql import SparkSession
+from pyspark.storagelevel import StorageLevel
 from pyspark.sql.functions import (
     col,
     broadcast,
-    sum as spark_sum
+    sum as spark_sum,
+    count as spark_count,
+    when,
 )
 
-from pyspark.sql.types import (
-    StructType,
-    StructField,
-    IntegerType,
-    StringType,
+
+# ============================================================
+# Optimization summary vs. the original version
+# ------------------------------------------------------------
+# 1. `enriched_df` (the broadcast join result) is persisted
+#    ONCE, right after it's built. In the original script it
+#    was recomputed from scratch by every downstream action:
+#    distinct_after, missing_geometry_grids, before/after row
+#    counts, geometry_types.count(), top_grids, and finally the
+#    parquet write — 7+ full re-executions of the join.
+#
+# 2. `activity_df` is persisted after the initial read since
+#    it's scanned/counted multiple times before the join
+#    (activity_count, distinct_before, before_rows).
+#
+# 3. `distinct_after` + `missing_geometry_grids` (previously two
+#    separate `.distinct().count()` passes) are now computed
+#    together in a single aggregation over one cached distinct
+#    grid/geometry set.
+#
+# 4. `before_rows` reuses the `activity_count` already computed,
+#    instead of re-counting `activity_df` a second time.
+#
+# 5. `grid_lookup` is small (comes from an in-memory Python list,
+#    not a file read) so caching it is cheap insurance, not a
+#    meaningful win — done anyway since it's reused 3x.
+# ============================================================
+
+
+# ============================================================
+# SPARK SESSION
+# ============================================================
+
+spark = (
+    SparkSession.builder
+    .appName("SP4_GeoEnrichment")
+    .master("local[4]")
+    .config("spark.driver.memory", "4g")
+    .config("spark.sql.shuffle.partitions", "8")
+    .getOrCreate()
 )
 
-import json
-import glob
 
-from sp2_sp3 import SparkCleaning
+# ============================================================
+# PATHS
+# ============================================================
 
-class SparkGeoEnrichment:
+INPUT_PATH = "./results/hourly_grid_summary/hourly_grid_summary.parquet"
+GEOJSON_PATH = "../data_set/milano-grid.geojson"
+OUTPUT_PATH = "./results/enriched_network/enriched_network.parquet"
 
-    def __init__(self, hourly_grid_summary, geojson_path):
-        self.hourly_grid_summary = hourly_grid_summary
-        self.geojson_path = geojson_path
 
-        self.grid_lookup = None
-        self.grid_activity_geo_df = None
-        self.unmatched_grid_ids = None
-        self.enrichment_report = {}
+# ============================================================
+# 1. LOAD NETWORK ACTIVITY
+# ============================================================
 
-    def load_geojson(self):
-        with open(self.geojson_path, 'r') as f:
-            geojson = json.load(f)
+activity_df = spark.read.parquet(INPUT_PATH).persist(StorageLevel.MEMORY_AND_DISK)
 
-        print("Top-level type:", geojson.get("type"))
-        print("Number of features:", len(geojson.get("features", [])))
+print("\n--- ACTIVITY DATA ---")
+activity_df.printSchema()
 
-        feature = geojson["features"][0]
+activity_count = activity_df.count()
+print("Activity rows:", activity_count)
 
-        print("Feature type:", feature.get("type"))
-        print("Properties:", feature.get("properties"))
-        print("Geometry type:", feature.get("geometry", {}).get("type"))
 
-        return geojson
+# ============================================================
+# 2. LOAD AND INSPECT GEOJSON
+# ============================================================
 
-if __name__ == "__main__":
+with open(GEOJSON_PATH, "r", encoding="utf-8") as f:
+    geojson = json.load(f)
 
-    INPUT_PATH = "../data_set/sms-call-internet-mi-*.csv"
-    GEOJSON_PATH = "../data_set/milano-grid.geojson"
+print("\n--- GEOJSON STRUCTURE ---")
+print("Top-level type:", geojson.get("type"))
 
-    files = glob.glob(INPUT_PATH)
+features = geojson.get("features", [])
+print("Number of features:", len(features))
 
-    spark = (
-        SparkSession.builder
-        .appName("SP4_GeoEnrichment")
-        .master("local[*]")
-        .config(
-            "spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version",
-            "2"
-        )
-        .config(
-            "spark.hadoop.fs.file.impl",
-            "org.apache.hadoop.fs.RawLocalFileSystem"
-        )
-        .getOrCreate()
-    )
+if features:
+    first_feature = features[0]
+    print("Feature type:", first_feature.get("type"))
+    print("Grid identifier:", first_feature.get("properties", {}).get("cellId"))
+    print("Geometry type:", first_feature.get("geometry", {}).get("type"))
 
-    print("\nRaw input files:")
-    for file in files:
-        print(file)
 
-    # -------------------------------------------------------------
-    # LOAD RAW ACTIVITY DATA
-    # -------------------------------------------------------------
+# ============================================================
+# 3. FLATTEN GEOJSON INTO GRID LOOKUP
+# ============================================================
 
-    raw_network_df = (
-        spark.read
-        .option("header", True)
-        .option("inferSchema", False)
-        .csv(files)
-    )
+grid_rows = []
 
-    print("\nRaw network data loaded.")
+for feature in features:
+    properties = feature.get("properties", {})
+    geometry = feature.get("geometry")
+    cell_id = properties.get("cellId")
 
-    # -------------------------------------------------------------
-    # RUN SP2 + SP3
-    # -------------------------------------------------------------
+    if cell_id is not None and geometry is not None:
+        grid_rows.append((int(cell_id), json.dumps(geometry)))
 
-    cleaning = SparkCleaning(raw_network_df)
+grid_lookup = spark.createDataFrame(grid_rows, ["grid_id", "geometry"]).persist(
+    StorageLevel.MEMORY_AND_DISK
+)
 
-    (
-        clean_network_df,
-        rejected_df,
-        rejected_summary,
-        null_handling_report,
-        hourly_grid_summary,
-    ) = cleaning.run()
+print("\n--- GRID LOOKUP ---")
+grid_lookup.printSchema()
 
-    print("\nSP2 + SP3 completed.")
+grid_count = grid_lookup.count()
+print("Grid lookup rows:", grid_count)
+grid_lookup.show(5, truncate=False)
 
-    print("\n--- HOURLY GRID SUMMARY ---")
-    hourly_grid_summary.show(10, truncate=False)
 
-    # -------------------------------------------------------------
-    # RUN SP4
-    # -------------------------------------------------------------
+# ============================================================
+# 4. SIZE COMPARISON
+# ============================================================
 
-    geo_enrichment = SparkGeoEnrichment(
-        hourly_grid_summary,
-        GEOJSON_PATH
-    )
+print("\n--- SIZE COMPARISON ---")
+print("Activity rows:", activity_count)
+print("Grid lookup rows:", grid_count)
+print("Grid lookup is much smaller:", grid_count < activity_count)
 
-    geo_enrichment.load_geojson()
 
-    # -------------------------------------------------------------
-    # STOP SPARK
-    # -------------------------------------------------------------
+# ============================================================
+# 5. DISTINCT ACTIVITY GRIDS BEFORE JOIN
+# ============================================================
 
-    spark.stop()
+distinct_before = (
+    activity_df
+    .select("grid_id")
+    .where(col("grid_id").isNotNull())
+    .distinct()
+    .count()
+)
+
+print("\nDistinct activity grids before join:", distinct_before)
+
+
+# ============================================================
+# 6. STANDARD JOIN EXECUTION PLAN  (plan only — no execution)
+# ============================================================
+
+print("\n--- STANDARD JOIN PLAN ---")
+
+standard_join = activity_df.join(grid_lookup, on="grid_id", how="left")
+standard_join.explain(mode="formatted")
+
+
+# ============================================================
+# 7. BROADCAST JOIN EXECUTION PLAN  (plan only — no execution)
+# ============================================================
+
+print("\n--- BROADCAST JOIN PLAN ---")
+
+broadcast_join = activity_df.join(broadcast(grid_lookup), on="grid_id", how="left")
+broadcast_join.explain(mode="formatted")
+
+
+# ============================================================
+# 8. PERFORM BROADCAST LEFT JOIN
+#    Persist immediately — everything from here on reuses this
+#    result instead of recomputing the join.
+# ============================================================
+
+enriched_df = broadcast_join.persist(StorageLevel.MEMORY_AND_DISK)
+
+
+# ============================================================
+# 9. JOIN VALIDATION
+#    distinct_after + missing_geometry_grids combined into one
+#    aggregation over one cached distinct grid/geometry set.
+# ============================================================
+
+grid_geometry_status = (
+    enriched_df
+    .select("grid_id", "geometry")
+    .where(col("grid_id").isNotNull())
+    .distinct()
+    .persist(StorageLevel.MEMORY_AND_DISK)
+)
+
+status_row = grid_geometry_status.agg(
+    spark_count(col("grid_id")).alias("distinct_after"),
+    spark_sum(when(col("geometry").isNull(), 1).otherwise(0)).alias(
+        "missing_geometry_grids"
+    ),
+).collect()[0]
+
+distinct_after = status_row["distinct_after"]
+missing_geometry_grids = status_row["missing_geometry_grids"] or 0
+
+grid_geometry_status.unpersist()
+
+if distinct_before > 0:
+    enriched_percentage = (
+        (distinct_before - missing_geometry_grids) / distinct_before
+    ) * 100
+else:
+    enriched_percentage = 0.0
+
+print("\n--- JOIN VALIDATION ---")
+print("Distinct activity grids before join:", distinct_before)
+print("Distinct grids after join:", distinct_after)
+print("Grids with missing geometry:", missing_geometry_grids)
+print(f"Geometry enrichment percentage: {enriched_percentage:.2f}%")
+
+
+# ============================================================
+# 10. VALIDATE ROW PRESERVATION
+#     Reuses activity_count instead of re-counting activity_df.
+# ============================================================
+
+before_rows = activity_count
+after_rows = enriched_df.count()
+
+print("\n--- ROW COUNT VALIDATION ---")
+print("Rows before join:", before_rows)
+print("Rows after join :", after_rows)
+
+assert before_rows == after_rows, "LEFT JOIN changed the number of activity rows!"
+print("PASS: Left join preserved activity row count.")
+
+
+# ============================================================
+# 11. GEOGRAPHICAL VALIDATION
+# ============================================================
+
+print("\n--- GEOGRAPHICAL VALIDATION ---")
+
+geometry_present_df = enriched_df.filter(col("geometry").isNotNull()).select(
+    "geometry"
+)
+
+print("Rows containing geometry:", geometry_present_df.count())
+print("Sample geometries:")
+geometry_present_df.show(5, truncate=False)
+
+
+# ============================================================
+# 12. CREATE REQUIRED ENRICHED DATASET
+# ============================================================
+
+enriched_df = enriched_df.select(
+    "timestamp",
+    "grid_id",
+    "sms_in",
+    "sms_out",
+    "call_in",
+    "call_out",
+    "internet_activity",
+    "total_activity",
+    "geometry",
+)
+
+
+# ============================================================
+# 13. TOP HIGH-ACTIVITY GRIDS
+# ============================================================
+
+print("\n--- TOP HIGH-ACTIVITY GRIDS ---")
+
+top_grids = (
+    enriched_df
+    .groupBy("grid_id", "geometry")
+    .agg(spark_sum("total_activity").alias("window_total_activity"))
+    .orderBy(col("window_total_activity").desc())
+    .limit(10)
+)
+
+top_grids.show(10, truncate=False)
+
+
+# ============================================================
+# 14. WRITE ENRICHED PARQUET
+# ============================================================
+
+print("\n--- WRITING ENRICHED DATASET ---")
+
+(
+    enriched_df
+    .repartition(8, "grid_id")
+    .write
+    .mode("overwrite")
+    .parquet(OUTPUT_PATH)
+)
+
+print(f"SP4 completed successfully!\nOutput: {OUTPUT_PATH}")
+
+# Release cached memory now that everything's written.
+# (unpersist the DataFrame objects that were actually persisted —
+# `enriched_df` was reassigned to a projection of it in step 12,
+# so the original persisted object is only reachable via `broadcast_join`.)
+activity_df.unpersist()
+grid_lookup.unpersist()
+broadcast_join.unpersist()
+
+spark.stop()
