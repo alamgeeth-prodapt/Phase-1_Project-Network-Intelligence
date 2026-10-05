@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from pyspark.sql import SparkSession
@@ -15,6 +16,7 @@ from pyspark.sql.functions import (
     row_number
 )
 from pyspark.sql.window import Window
+from pyspark.sql import functions as F
 
 
 # ---------------------------------------------------------
@@ -22,6 +24,8 @@ from pyspark.sql.window import Window
 # ---------------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
 ENV_PATH = os.path.join(BASE_DIR, ".env.de6")
 
 load_dotenv(ENV_PATH)
@@ -69,11 +73,13 @@ class NetworkWarehouse:
         self.reference_path = reference_path
         self.jdbc_url = jdbc_url
         self.jdbc_properties = jdbc_properties
-
+        self.day_summary = None
         self.analytics_df = None
         self.dim_grid = None
         self.dim_time = None
         self.fact_network_activity = None
+        self.grid_daily_summary = None
+        self.tables_written = []
 
     # -----------------------------------------------------
     # Read DE3 analytics output
@@ -160,16 +166,62 @@ class NetworkWarehouse:
             if grid_id is None:
                 continue
 
-            geometry_reference = (
-                self.reference_path
-            )
+            # geometry_reference = (
+            #     self.reference_path
+            # )
+
+            # grid_rows.append(
+            #     (
+            #         int(grid_id),
+            #         json.dumps(geometry)
+            #     )
+            # )
+
+            geometry_type = geometry.get("type") if geometry else None
+            coordinates = geometry.get("coordinates") if geometry else None
+
+            if not coordinates:
+                continue
+
+            points = []
+
+            if geometry_type == "Polygon":
+
+                for ring in coordinates:
+                    points.extend(ring)
+
+            elif geometry_type == "MultiPolygon":
+
+                for polygon in coordinates:
+                    for ring in polygon:
+                        points.extend(ring)
+
+            else:
+                logging.warning(
+                    f"Unsupported geometry type for grid {grid_id}: "
+                    f"{geometry_type}"
+                )
+                continue
+
+            if not points:
+                continue
+
+            centroid_longitude = sum(
+            point[0] for point in points
+            ) / len(points)
+
+            centroid_latitude = sum(
+                point[1] for point in points
+                ) / len(points)
 
             grid_rows.append(
                 (
                     int(grid_id),
-                    geometry_reference
+                    float(centroid_latitude),
+                    float(centroid_longitude)
                 )
-            )
+            ) 
+
 
         if not grid_rows:
             raise ValueError(
@@ -177,17 +229,17 @@ class NetworkWarehouse:
             )
 
         self.dim_grid = self.spark.createDataFrame(
-            grid_rows,
-            [
-                "grid_id",
-                "geometry_reference"
-            ]
+        grid_rows,
+        [
+            "grid_id",
+            "centroid_latitude",
+            "centroid_longitude"
+        ]
         )
 
-        # Remove duplicate grid IDs if present
         self.dim_grid = (
-            self.dim_grid
-            .dropDuplicates(["grid_id"])
+        self.dim_grid
+        .dropDuplicates(["grid_id"])
         )
 
         logging.info(
@@ -327,6 +379,152 @@ class NetworkWarehouse:
     # -----------------------------------------------------
     # Write DataFrame to MySQL
     # -----------------------------------------------------
+    def create_day_summary(self):
+        logging.info("creating day summary")
+
+        fact_with_time = (
+            self.fact_network_activity
+            .join(
+                self.dim_time.select(
+                    "time_key",
+                    "date",
+                    "hour"
+                ),
+                on="time_key",
+                how="inner"
+            )
+        )
+
+        daily_metrics = (
+        fact_with_time
+            .groupBy("date")
+            .agg(
+                F.sum("total_activity").alias("total_activity"),
+                F.countDistinct("grid_id").alias("active_grids")
+            )
+        )
+
+        hourly_activity = (
+        fact_with_time
+        .groupBy("date", "hour")
+        .agg(
+            F.sum("total_activity").alias("hour_activity")
+            )
+        )
+
+        peak_window = Window.partitionBy("date").orderBy(
+        F.desc("hour_activity"),
+        F.asc("hour")
+        )
+
+        peak_hours = (
+        hourly_activity
+        .withColumn(
+            "rank",
+            F.row_number().over(peak_window)
+        )
+        .filter(F.col("rank") == 1)
+        .select(
+            "date",
+            F.col("hour").alias("peak_hour")
+        )
+        )
+
+        grid_activity = (
+        fact_with_time
+        .groupBy("date", "grid_id")
+        .agg(
+            F.sum("total_activity").alias("grid_activity")
+        )
+    )
+
+        grid_window = Window.partitionBy("date").orderBy(
+            F.desc("grid_activity"),
+            F.asc("grid_id")
+        )
+
+        top_grids = (
+            grid_activity
+            .withColumn(
+                "rank",
+                F.row_number().over(grid_window)
+            )
+            .filter(F.col("rank") == 1)
+            .select(
+                "date",
+                F.col("grid_id").alias("top_grid")
+            )
+        )
+
+        self.day_summary = (
+        daily_metrics
+        .join(
+            peak_hours,
+            on="date",
+            how="inner"
+        )
+        .join(
+            top_grids,
+            on="date",
+            how="inner"
+        )
+        .withColumnRenamed(
+            "date",
+            "summary_date"
+        )
+        .select(
+            "summary_date",
+            "total_activity",
+            "active_grids",
+            "peak_hour",
+            "top_grid"
+        )
+        .orderBy("summary_date")
+        )
+
+        logging.info(
+        f"day_summary rows: {self.day_summary.count()}"
+        )
+
+        logging.info(
+        f"day_summary schema:\n{self.day_summary.schema}"
+        )
+
+        return self.day_summary
+    
+    def create_grid_daily_summary(self):
+
+        logging.info("Creating grid_daily_summary")
+
+        fact_with_time = (
+            self.fact_network_activity
+            .join(
+                self.dim_time.select("time_key", "date"),
+                on="time_key",
+                how="inner"
+            )
+        )
+
+        self.grid_daily_summary = (
+            fact_with_time
+            .groupBy("date", "grid_id")
+            .agg(
+                F.sum("total_activity").alias("total_activity")
+            )
+            .withColumnRenamed("date", "day")
+            .select("grid_id", "day", "total_activity")
+            .orderBy("grid_id", "day")
+        )
+
+        logging.info(
+            f"grid_daily_summary rows: {self.grid_daily_summary.count()}"
+        )
+
+        logging.info(
+            f"grid_daily_summary schema:\n{self.grid_daily_summary.schema}"
+        )
+
+        return self.grid_daily_summary
 
     def write_table(
         self,
@@ -348,9 +546,13 @@ class NetworkWarehouse:
             )
         )
 
+        self.tables_written.append(table_name)
+
         logging.info(
             f"{table_name} successfully written."
         )
+
+
 
     # -----------------------------------------------------
     # Create indexes
@@ -482,6 +684,80 @@ class NetworkWarehouse:
                 connection.close()
 
     # -----------------------------------------------------
+    # Write machine-readable status
+    # -----------------------------------------------------
+
+    def write_status(self, status="SUCCESS", reason=None):
+
+        logging.info("Writing DE6 machine-readable status")
+
+        os.makedirs(LOG_DIR, exist_ok=True)
+
+        dim_grid_rows = (
+            self.dim_grid.count()
+            if self.dim_grid is not None
+            else 0
+        )
+
+        dim_time_rows = (
+            self.dim_time.count()
+            if self.dim_time is not None
+            else 0
+        )
+
+        fact_rows = (
+            self.fact_network_activity.count()
+            if self.fact_network_activity is not None
+            else 0
+        )
+
+        daysum = (
+            self.day_summary.count()
+            if self.day_summary is not None
+            else 0
+        )
+
+        gridsum = (
+            self.grid_daily_summary.count()
+            if self.grid_daily_summary is not None
+            else 0 
+        )
+
+        status_payload = {
+            "status": status,
+            "dim_grid_rows": dim_grid_rows,
+            "dim_time_rows": dim_time_rows,
+            "fact_network_activity_rows": fact_rows,
+            "day_summary": daysum,
+            "grid_daily_summary": gridsum,
+            "tables_written": self.tables_written,
+            "reason": reason,
+            "processed_at": datetime.now(
+                timezone.utc
+            ).isoformat()
+        }
+
+        status_file = os.path.join(
+            LOG_DIR,
+            "de6_status.json"
+        )
+
+        with open(
+            status_file,
+            "w",
+            encoding="utf-8"
+        ) as file:
+            json.dump(
+                status_payload,
+                file,
+                indent=2
+            )
+
+        logging.info(
+            f"DE6 status written to: {status_file}"
+        )
+
+    # -----------------------------------------------------
     # Run complete warehouse pipeline
     # -----------------------------------------------------
 
@@ -491,32 +767,63 @@ class NetworkWarehouse:
             "========== DE6 WAREHOUSE START =========="
         )
 
-        self.read_analytics()
+        try:
 
-        self.create_dim_grid()
+            self.read_analytics()
 
-        self.create_dim_time()
+            self.create_dim_grid()
 
-        self.create_fact_network_activity()
+            self.create_dim_time()
 
-        self.write_table(
-            self.dim_grid,
-            "dim_grid"
-        )
+            self.create_fact_network_activity()
 
-        self.write_table(
-            self.dim_time,
-            "dim_time"
-        )
+            self.create_day_summary()
 
-        self.write_table(
-            self.fact_network_activity,
-            "fact_network_activity"
-        )
+            self.create_grid_daily_summary()
 
-        self.create_indexes()
+            self.write_table(
+                self.dim_grid,
+                "dim_grid"
+            )
 
-        self.validate()
+            self.write_table(
+                self.dim_time,
+                "dim_time"
+            )
+
+            self.write_table(
+                self.fact_network_activity,
+                "fact_network_activity"
+            )
+
+            self.write_table(
+                self.day_summary,
+                "day_summary"
+            )
+
+            self.write_table(
+                self.grid_daily_summary,
+                "grid_daily_summary"
+            )
+
+            self.create_indexes()
+
+            self.validate()
+
+        except Exception as exc:
+
+            logging.error(
+                f"DE6 warehouse pipeline failed: {exc}"
+            )
+
+            self.write_status(
+                status="FAILURE",
+                reason=str(exc)
+            )
+
+            raise
+
+        self.write_status(status="SUCCESS")
 
         logging.info(
             "========== DE6 WAREHOUSE COMPLETE =========="

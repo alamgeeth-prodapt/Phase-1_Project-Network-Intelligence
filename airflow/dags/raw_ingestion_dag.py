@@ -1,14 +1,14 @@
-
 from datetime import datetime
 
 from airflow.sdk import dag, task
-from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
+# from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 from ingestion.de2_ingestion import (
     detect_files,
     validate_schema,
     validate_minimum_quality,
     route_file,
     write_metadata,
+    write_status,
 )
 
 
@@ -139,6 +139,50 @@ def de2_landing_to_raw():
                 f"REASON={result['reason']}"
             )
 
+        return results
+
+    # ========================================================
+    # 5. WRITE RUN-LEVEL STATUS (de2_status.json)
+    # ========================================================
+
+    @task
+    def write_run_status(results):
+
+        total_files = len(results)
+
+        valid_files = sum(
+            1
+            for result in results
+            if result["status"] == "VALID"
+        )
+
+        rejected_files = sum(
+            1
+            for result in results
+            if result["status"] == "REJECTED"
+        )
+
+        rows_ingested = sum(
+            result["row_count"]
+            for result in results
+            if result["status"] == "VALID"
+        )
+
+        write_status(
+            status="SUCCESS",
+            total_files=total_files,
+            valid_files=valid_files,
+            rejected_files=rejected_files,
+            rows_ingested=rows_ingested,
+        )
+
+        print(
+            f"DE2 status: total={total_files}, "
+            f"valid={valid_files}, "
+            f"rejected={rejected_files}, "
+            f"rows_ingested={rows_ingested}"
+        )
+
     # ========================================================
     # DEPENDENCIES
     # ========================================================
@@ -151,13 +195,15 @@ def de2_landing_to_raw():
 
     logged = log(routed)
 
-    trigger_de3 = TriggerDagRunOperator(
-        task_id="trigger_de3",
-        trigger_dag_id="de3_spark_processing",
-        wait_for_completion=False,
-    )
+    write_run_status(logged)
 
-    logged >> trigger_de3
+    # trigger_de3 = TriggerDagRunOperator(
+    #     task_id="trigger_de3",
+    #     trigger_dag_id="de3_spark_processing",
+    #     wait_for_completion=False,
+    # )
+
+    # logged >> trigger_de3
 
 
 de2_landing_to_raw()

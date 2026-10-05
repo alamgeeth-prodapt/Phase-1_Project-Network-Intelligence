@@ -6,6 +6,7 @@ import json
 from pyspark.sql import SparkSession
 import logging
 import os
+from datetime import datetime, timezone
 from pyspark.sql.functions import (
     col,
     dayofweek,
@@ -26,6 +27,8 @@ from pyspark.sql.types import (
     DoubleType
 )
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+LOG_DIR = PROJECT_ROOT / "logs"
 
 load_dotenv(BASE_DIR / ".env.de3")
 
@@ -48,6 +51,16 @@ class TelecomPipeline:
         self.analytics_path = analytics_path
         self.reference_path = reference_path
         self.df = None
+
+        # Populated as the pipeline runs; kept at safe defaults so a
+        # status write is possible even after a partial failure.
+        self.input_rows = 0
+        self.rejected_rows = 0
+        self.output_rows = 0
+        self.nulls_handled = 0
+        self.clean_df = None
+        self.aggregated_df = None
+        self.enriched_df = None
 
 
     def read_raw(self   ):
@@ -103,7 +116,7 @@ class TelecomPipeline:
     def clean(self):    
         logging.info("Starting data cleaning")
 
-        input_rows = self.df.count()
+        self.input_rows = self.df.count()
 
         activity_columns = [
         "sms_in",
@@ -113,7 +126,7 @@ class TelecomPipeline:
         "internet"
         ]
 
-        nulls_handled = 0
+        self.nulls_handled = 0
 
         for column_name in activity_columns:
 
@@ -122,7 +135,7 @@ class TelecomPipeline:
                 .count()
             )
 
-            nulls_handled += null_count
+            self.nulls_handled += null_count
 
             self.df = self.df.withColumn(
                 column_name,
@@ -163,8 +176,8 @@ class TelecomPipeline:
 
         self.output_rows = self.clean_df.count()
 
-        logging.info(f"Input rows: {input_rows}")
-        logging.info(f"Null activity values handled: {nulls_handled}")
+        logging.info(f"Input rows: {self.input_rows}")
+        logging.info(f"Null activity values handled: {self.nulls_handled}")
         logging.info(f"Rejected rows: {self.rejected_rows}")
         logging.info(f"Clean output rows: {self.output_rows}")
         self.df = self.clean_df
@@ -318,14 +331,245 @@ class TelecomPipeline:
         )
 
         logging.info("Output write completed")
+    
+    def quality_check(self):
+
+        logging.info("starting quality check")
+
+        failures = []
+        
+        if self.output_rows == 0:
+            failures.append("No output rows found after processing")
+
+        if self.rejected_rows > 0:
+            failures.append("rejected rows found, please check the rejected data for issues")
+
+        if self.output_rows + self.rejected_rows != self.input_rows:
+            failures.append("Row count mismatch: input rows do not match output + rejected rows")
+
+        required_clean_columns = [
+            "timestamp",
+            "grid_id",
+            "country_code",
+            "sms_in",
+            "sms_out",
+            "call_in",
+            "call_out",
+            "internet",
+            "date",
+            "hour",
+            "day_of_week"
+        ]
+
+        missing_columns = [
+            column_name
+            for column_name in required_clean_columns
+            if column_name not in self.clean_df.columns
+        ]
+
+        if missing_columns:
+            failures.append(f"Missing required columns in clean DataFrame: {missing_columns}")
+
+        null_grid_rows = self.clean_df.filter(
+            col("grid_id").isNull()
+        ).count()
+
+        null_timestamp_rows = self.clean_df.filter(
+            col("timestamp").isNull()
+        ).count()
+
+        if null_grid_rows > 0 or null_timestamp_rows > 0:
+            failures.append(
+                "Null values found in required columns after cleaning"
+            )
+
+        activity_columns = [
+            "sms_in",
+            "sms_out",
+            "call_in",
+            "call_out",
+            "internet"
+        ]
+
+        for column_name in activity_columns:
+
+            negative_rows = self.clean_df.filter(
+                col(column_name) < 0
+            ).count()
+
+            if negative_rows > 0:
+                failures.append(
+                    f"Clean output contains {negative_rows} "
+                    f"negative values in {column_name}"
+                )
+
+        aggregated_rows = self.aggregated_df.count()
+
+        if aggregated_rows == 0:
+            failures.append("Aggregated output is empty")
+
+        if aggregated_rows > self.output_rows:
+            failures.append(
+                f"Aggregation increased row count: "
+                f"clean={self.output_rows}, aggregated={aggregated_rows}"
+            )
+
+        required_aggregated_columns = [
+            "grid_id",
+            "date",
+            "timestamp",
+            "hour",
+            "day_of_week",
+            "sms_in",
+            "sms_out",
+            "call_in",
+            "call_out",
+            "internet_activity",
+            "total_sms",
+            "total_calls",
+            "total_activity"
+        ]
+
+        missing_aggregated_columns = [
+            column_name
+            for column_name in required_aggregated_columns
+            if column_name not in self.aggregated_df.columns
+        ]
+
+        if missing_aggregated_columns:
+            failures.append(f"Missing aggregated columns: {missing_aggregated_columns}")
+
+        aggregated_null_keys = self.aggregated_df.filter(
+            col("grid_id").isNull() |
+            col("timestamp").isNull()
+        ).count()
+
+        if aggregated_null_keys > 0:
+            failures.append(
+                f"Aggregated output contains "
+                f"{aggregated_null_keys} null grid/timestamp keys"
+            )
+
+        aggregated_activity_columns = [
+            "sms_in",
+            "sms_out",
+            "call_in",
+            "call_out",
+            "internet_activity",
+            "total_sms",
+            "total_calls",
+            "total_activity"
+        ]
+
+        for column_name in aggregated_activity_columns:
+
+            negative_rows = self.aggregated_df.filter(
+                col(column_name) < 0
+            ).count()
+
+            if negative_rows > 0:
+                failures.append(
+                    f"Aggregated output contains {negative_rows} "
+                    f"negative values in {column_name}"
+                )
+
+        enriched_rows = self.enriched_df.count()
+
+        if enriched_rows == 0:
+            failures.append("Enriched output is empty")
+
+        if enriched_rows != aggregated_rows:
+            failures.append(
+                f"Enrichment changed row count: "
+                f"aggregated={aggregated_rows}, enriched={enriched_rows}"
+            )
+
+        null_geometry_rows = self.enriched_df.filter(
+            col("geometry").isNull()
+        ).count()
+
+        if null_geometry_rows > 0:
+            failures.append(
+                f"Enriched output contains {null_geometry_rows} "
+                f"rows without matching geometry"
+            )
+
+
+        if failures:
+            logging.error("DE3 quality check failed")
+            for failure in failures:
+                logging.error(f"QC FAILURE: {failure}")
+
+            raise ValueError(
+                "DE3 quality check failed. "
+                f"{len(failures)} validation(s) failed."
+            )
+    def write_status(self, status="SUCCESS", reason=None):
+        logging.info("Writing DE3 machine-readable status")
+
+        os.makedirs(LOG_DIR, exist_ok=True)
+
+        rows_published = (
+            self.enriched_df.count()
+            if self.enriched_df is not None
+            else 0
+        )
+
+        status_payload = {
+            "status": status,
+            "rows_in": self.input_rows,
+            "rows_rejected": self.rejected_rows,
+            "nulls_handled": self.nulls_handled,
+            "rows_published": rows_published,
+            "reason": reason,
+            "processed_at": datetime.now(
+                timezone.utc
+            ).isoformat()
+        }
+
+        status_file = os.path.join(
+            LOG_DIR,
+            "de3_status.json"
+        )
+
+        with open(
+            status_file,
+            "w",
+            encoding="utf-8"
+        ) as file:
+            json.dump(
+                status_payload,
+                file,
+                indent=2
+            )
+
+        logging.info(
+            f"DE3 status written to: {status_file}"
+        )
 
     def run(self):
-        self.read_raw()
-        self.clean()
-        self.aggregate()
-        self.enrich()
-        self.write_outputs()
+        try:
+            self.read_raw()
+            self.clean()
+            self.aggregate()
+            self.enrich()
+            self.quality_check()
+            self.write_outputs()
 
+        except Exception as exc:
+
+            logging.error(
+                f"DE3 pipeline failed: {exc}"
+            )
+
+            self.write_status(
+                status="FAILURE",
+                reason=str(exc)
+            )
+
+            raise
+
+        self.write_status(status="SUCCESS")
 
 if __name__ == "__main__":
 

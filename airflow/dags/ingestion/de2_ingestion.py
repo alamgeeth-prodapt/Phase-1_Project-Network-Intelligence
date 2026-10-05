@@ -1,9 +1,9 @@
-
 import csv
 import logging
 import os
 import re
 import shutil
+import json
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -24,6 +24,7 @@ REFERENCE_DIR = os.path.join(BASE_DIR, "data", "reference")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 
 INGESTION_LOG = os.path.join(LOG_DIR, "ingestion_log.csv")
+STATUS_FILE = os.path.join(LOG_DIR, "de2_status.json")
 
 
 # Daily activity file pattern
@@ -370,6 +371,53 @@ def route_file(
 
 
 # ============================================================
+# 6. WRITE RUN-LEVEL STATUS (machine-readable, like DE3/DE6)
+# ============================================================
+
+def write_status(
+    status="SUCCESS",
+    reason=None,
+    total_files=0,
+    valid_files=0,
+    rejected_files=0,
+    rows_ingested=0
+):
+
+    os.makedirs(
+        LOG_DIR,
+        exist_ok=True
+    )
+
+    status_payload = {
+        "status": status,
+        "total_files": total_files,
+        "valid_files": valid_files,
+        "rejected_files": rejected_files,
+        "rows_ingested": rows_ingested,
+        "reason": reason,
+        "processed_at": datetime.now(
+            timezone.utc
+        ).isoformat()
+    }
+
+    with open(
+        STATUS_FILE,
+        "w",
+        encoding="utf-8"
+    ) as status_file:
+
+        json.dump(
+            status_payload,
+            status_file,
+            indent=2
+        )
+
+    logging.info(
+        f"DE2 status written to: {STATUS_FILE}"
+    )
+
+
+# ============================================================
 # MAIN INGESTION FLOW
 # ============================================================
 
@@ -377,77 +425,125 @@ def run_ingestion():
 
     create_directories()
 
-    detected_files = detect_files()
+    total_files = 0
+    valid_files = 0
+    rejected_files = 0
+    rows_ingested = 0
 
-    if not detected_files:
+    try:
 
-        logging.info(
-            "No daily activity files found."
-        )
+        detected_files = detect_files()
 
-        return
+        total_files = len(detected_files)
 
-    for file_path in detected_files:
+        if not detected_files:
 
-        filename = os.path.basename(
-            file_path
-        )
-
-        logging.info(
-            f"Processing: {filename}"
-        )
-
-        # ----------------------------------------------------
-        # Schema validation
-        # ----------------------------------------------------
-
-        schema_valid, schema_reason = (
-            validate_schema(file_path)
-        )
-
-        if not schema_valid:
-
-            route_file(
-                file_path=file_path,
-                status="REJECTED",
-                reason=schema_reason,
-                row_count=0
+            logging.info(
+                "No daily activity files found."
             )
 
-            continue
+            write_status(
+                status="SUCCESS",
+                total_files=total_files,
+                valid_files=valid_files,
+                rejected_files=rejected_files,
+                rows_ingested=rows_ingested
+            )
 
-        # ----------------------------------------------------
-        # Minimum quality validation
-        # ----------------------------------------------------
+            return
 
-        quality_valid, row_count, quality_reason = (
-            validate_minimum_quality(file_path)
-        )
+        for file_path in detected_files:
 
-        if not quality_valid:
+            filename = os.path.basename(
+                file_path
+            )
+
+            logging.info(
+                f"Processing: {filename}"
+            )
+
+            # ----------------------------------------------------
+            # Schema validation
+            # ----------------------------------------------------
+
+            schema_valid, schema_reason = (
+                validate_schema(file_path)
+            )
+
+            if not schema_valid:
+
+                route_file(
+                    file_path=file_path,
+                    status="REJECTED",
+                    reason=schema_reason,
+                    row_count=0
+                )
+
+                rejected_files += 1
+
+                continue
+
+            # ----------------------------------------------------
+            # Minimum quality validation
+            # ----------------------------------------------------
+
+            quality_valid, row_count, quality_reason = (
+                validate_minimum_quality(file_path)
+            )
+
+            if not quality_valid:
+
+                route_file(
+                    file_path=file_path,
+                    status="REJECTED",
+                    reason=quality_reason,
+                    row_count=row_count
+                )
+
+                rejected_files += 1
+
+                continue
+
+            # ----------------------------------------------------
+            # Valid file
+            # ----------------------------------------------------
 
             route_file(
                 file_path=file_path,
-                status="REJECTED",
+                status="VALID",
                 reason=quality_reason,
                 row_count=row_count
             )
 
-            continue
+            valid_files += 1
+            rows_ingested += row_count
 
-        # ----------------------------------------------------
-        # Valid file
-        # ----------------------------------------------------
+    except Exception as exc:
 
-        route_file(
-            file_path=file_path,
-            status="VALID",
-            reason=quality_reason,
-            row_count=row_count
+        logging.error(
+            f"DE2 ingestion failed: {exc}"
         )
+
+        write_status(
+            status="FAILURE",
+            reason=str(exc),
+            total_files=total_files,
+            valid_files=valid_files,
+            rejected_files=rejected_files,
+            rows_ingested=rows_ingested
+        )
+
+        raise
+
+    write_status(
+        status="SUCCESS",
+        total_files=total_files,
+        valid_files=valid_files,
+        rejected_files=rejected_files,
+        rows_ingested=rows_ingested
+    )
 
 
 if __name__ == "__main__":
 
     run_ingestion()
-

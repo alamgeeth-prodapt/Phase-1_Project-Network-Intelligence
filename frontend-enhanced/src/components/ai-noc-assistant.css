@@ -1,0 +1,1116 @@
+/*
+  AI NOC Assistant — Floating & Expandable Panel
+  Matches Grid Field Atlas design system tokens
+*/
+
+.noc-assistant-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1200;
+  font-family: var(--font-ui);
+  color: var(--text);
+  pointer-events: none; /* Let background be clickable except the widget itself */
+}
+
+.noc-assistant-container * {
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   Trigger Pill Button (Collapsed state)
+   ========================================================================== */
+
+.noc-assistant-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px 10px 14px;
+  background: var(--panel-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 9999px;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.noc-assistant-trigger:hover {
+  transform: translateY(-2px);
+  border-color: var(--ink);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.noc-assistant-trigger:active {
+  transform: translateY(0);
+}
+
+.noc-trigger-pulse-ring {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--live);
+  opacity: 0;
+  animation: nocPulse 3s infinite cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+}
+
+@keyframes nocPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  60% { transform: scale(1.08); opacity: 0; }
+  100% { transform: scale(1.08); opacity: 0; }
+}
+
+.noc-trigger-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.noc-status-indicator {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--live);
+  border: 2px solid var(--panel-raised);
+}
+
+.noc-trigger-label {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.noc-trigger-main {
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.noc-trigger-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-data);
+}
+
+.noc-trigger-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--beacon);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-data);
+  margin-left: 4px;
+}
+
+/* ==========================================================================
+   Window Container (Standard & Expanded)
+   ========================================================================== */
+
+.noc-assistant-window {
+  display: flex;
+  flex-direction: column;
+  width: 440px;
+  height: 620px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: nocWindowIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.noc-assistant-container.is-expanded .noc-assistant-window {
+  width: 860px;
+  height: 82vh;
+}
+
+@keyframes nocWindowIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.noc-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--panel-raised);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.noc-header-branding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.noc-header-radar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--live);
+  background: var(--live-dim);
+}
+
+.noc-radar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--live);
+}
+
+.noc-header-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.noc-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.noc-model-tag {
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--live-dim);
+  color: var(--live);
+  border: 1px solid var(--live);
+}
+
+.noc-header-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.noc-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  box-shadow: 0 0 6px var(--live);
+}
+
+.noc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.noc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.noc-action-btn:hover {
+  background: var(--bg);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
+.noc-action-btn.is-active {
+  background: var(--ink);
+  color: var(--panel);
+  border-color: var(--ink);
+}
+
+.noc-btn-label {
+  display: inline-block;
+}
+
+.noc-expand-btn,
+.noc-close-btn {
+  padding: 6px 8px;
+}
+
+.noc-close-btn:hover {
+  background: var(--beacon-dim);
+  color: var(--beacon);
+  border-color: var(--beacon);
+}
+
+/* ==========================================================================
+   Body Layout
+   ========================================================================== */
+
+.noc-window-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: var(--panel);
+}
+
+/* ==========================================================================
+   History / Previous Sessions Panel
+   ========================================================================== */
+
+.noc-sessions-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  background: var(--panel);
+  overflow-y: auto;
+}
+
+.noc-sessions-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.noc-sessions-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.noc-sessions-desc {
+  margin: 4px 0 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.noc-clear-all-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.noc-clear-all-btn:hover {
+  color: var(--beacon);
+  border-color: var(--beacon);
+  background: var(--beacon-dim);
+}
+
+.noc-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.noc-session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.noc-session-card:hover {
+  border-color: var(--border-strong);
+  transform: translateX(2px);
+}
+
+.noc-session-card.is-active {
+  border-color: var(--live);
+  background: var(--live-dim);
+}
+
+.noc-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.noc-session-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.noc-active-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  flex-shrink: 0;
+}
+
+.noc-session-title-text {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noc-session-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-data);
+}
+
+.noc-meta-dot {
+  opacity: 0.5;
+}
+
+.noc-session-preview {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.noc-session-del-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.15s ease;
+}
+
+.noc-session-del-btn:hover {
+  color: var(--beacon);
+  background: var(--beacon-dim);
+}
+
+/* ==========================================================================
+   Active Chat View
+   ========================================================================== */
+
+.noc-chat-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.noc-chat-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.noc-chat-title-badge {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 65%;
+}
+
+.noc-chat-title-badge strong {
+  color: var(--ink);
+}
+
+.noc-chat-timestamp {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+}
+
+/* Messages Scroller */
+.noc-messages-scroller {
+  flex: 1;
+  min-height: 0;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--panel);
+}
+
+.noc-messages-scroller::-webkit-scrollbar {
+  width: 6px;
+}
+
+.noc-messages-scroller::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+/* Message Row */
+.noc-message-row {
+  display: flex;
+  gap: 10px;
+  max-width: 94%;
+}
+
+.noc-message-row.is-user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.noc-message-row.is-assistant {
+  align-self: flex-start;
+}
+
+.noc-message-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.noc-message-row.is-user .noc-message-avatar {
+  background: #26314a;
+  color: #ffffff;
+  border: 1px solid #1c2438;
+}
+
+.noc-message-row.is-assistant .noc-message-avatar {
+  background: var(--live-dim);
+  color: var(--live);
+  border: 1px solid var(--live);
+}
+
+.noc-message-bubble {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.noc-message-row.is-user .noc-message-bubble {
+  background: #26314a;
+  color: #ffffff;
+  border: 1px solid #1c2438;
+  border-bottom-right-radius: 1px;
+}
+
+.noc-message-row.is-assistant .noc-message-bubble {
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 1px;
+}
+
+.noc-message-row.is-error .noc-message-bubble {
+  background: var(--beacon-dim);
+  border-color: var(--beacon);
+  color: var(--beacon);
+}
+
+.noc-bubble-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 4px;
+}
+
+.noc-message-row.is-user .noc-bubble-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.noc-author-name {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.noc-message-row.is-user .noc-author-name {
+  color: #ffffff;
+}
+
+.noc-bubble-time {
+  font-family: var(--font-data);
+  opacity: 0.7;
+}
+
+.noc-message-row.is-user .noc-bubble-time {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* User message dark theme contrast */
+[data-theme='dark'] .noc-message-row.is-user .noc-message-avatar {
+  background: #364262;
+  color: #ffffff;
+  border: 1px solid #4d5c84;
+}
+
+[data-theme='dark'] .noc-message-row.is-user .noc-message-bubble {
+  background: #2b354f;
+  color: #f1f5f9;
+  border: 1px solid #435075;
+}
+
+[data-theme='dark'] .noc-message-row.is-user .noc-bubble-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='dark'] .noc-message-row.is-user .noc-author-name {
+  color: #f1f5f9;
+}
+
+[data-theme='dark'] .noc-message-row.is-user .noc-bubble-time {
+  color: #a3adc4;
+}
+
+[data-theme='dark'] .noc-message-row.is-user .noc-user-text {
+  color: #f1f5f9;
+}
+
+.noc-copy-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 10px;
+  padding: 1px 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.noc-copy-btn:hover {
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+
+.noc-bubble-content {
+  word-break: break-word;
+}
+
+.noc-user-text {
+  margin: 0;
+  white-space: pre-wrap;
+  color: inherit;
+}
+
+/* ==========================================================================
+   Formatted Markdown Elements
+   ========================================================================== */
+
+.noc-formatted-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.noc-para {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.noc-bold {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.noc-inline-code {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  padding: 1px 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--ink);
+}
+
+.noc-code-block {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 4px 0;
+  overflow-x: auto;
+  color: var(--ink);
+}
+
+.noc-section-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin: 4px 0;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.noc-section-header.is-critical {
+  background: var(--beacon-dim);
+  color: var(--beacon);
+  border: 1px solid var(--beacon);
+}
+
+.noc-section-header.is-warn {
+  background: rgba(205, 138, 53, 0.15);
+  color: var(--warn);
+  border: 1px solid var(--warn);
+}
+
+.noc-section-header.is-ok {
+  background: var(--live-dim);
+  color: var(--live);
+  border: 1px solid var(--live);
+}
+
+.noc-section-header.is-info {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+}
+
+.noc-section-tag {
+  font-family: var(--font-data);
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.noc-section-val {
+  font-weight: 700;
+}
+
+.noc-structured-header {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  margin-top: 8px;
+  text-transform: uppercase;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 2px;
+}
+
+.noc-bullet-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.noc-bullet-dot {
+  color: var(--live);
+  font-weight: bold;
+}
+
+.noc-line-spacer {
+  height: 4px;
+}
+
+/* ==========================================================================
+   Thinking / Loading
+   ========================================================================== */
+
+.noc-thinking-bubble {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+
+.noc-thinking-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.noc-thinking-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  animation: nocDotPulse 1.2s infinite ease-in-out both;
+}
+
+.noc-thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+.noc-thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes nocDotPulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1.1); opacity: 1; }
+}
+
+.noc-thinking-text {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ==========================================================================
+   Quick Prompts
+   ========================================================================== */
+
+.noc-quick-prompts {
+  padding: 8px 14px;
+  background: var(--panel-raised);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.noc-quick-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.noc-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.noc-chip-btn {
+  padding: 4px 9px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.noc-chip-btn:hover:not(:disabled) {
+  background: var(--live-dim);
+  border-color: var(--live);
+  color: var(--live);
+  transform: translateY(-1px);
+}
+
+.noc-chip-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Input Container
+   ========================================================================== */
+
+.noc-input-container {
+  padding: 10px 14px 12px 14px;
+  background: var(--panel-raised);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.noc-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  resize: none;
+  outline: none;
+  line-height: 1.4;
+  transition: border-color 0.15s ease;
+}
+
+.noc-textarea:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px rgba(38, 49, 74, 0.1);
+}
+
+.noc-textarea:disabled {
+  background: var(--panel);
+  opacity: 0.7;
+}
+
+.noc-input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.noc-input-tip {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--font-data);
+}
+
+.noc-send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--panel);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.noc-send-btn:hover:not(:disabled) {
+  background: var(--live);
+  transform: translateY(-1px);
+}
+
+.noc-send-btn:disabled {
+  background: var(--border);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Mobile / Narrow Viewport Responsiveness
+   ========================================================================== */
+
+@media (max-width: 600px) {
+  .noc-assistant-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .noc-assistant-window {
+    width: 100%;
+    height: 75vh;
+  }
+
+  .noc-assistant-container.is-expanded .noc-assistant-window {
+    width: 100%;
+    height: 85vh;
+  }
+
+  .noc-btn-label {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   NOC Plugins & Lifecycle Hooks Execution Telemetry
+   ========================================================================== */
+
+.noc-plugins-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  font-size: 11px;
+}
+
+.noc-plugins-label {
+  font-family: var(--font-data);
+  color: var(--text-faint);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.noc-plugin-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-data);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.noc-plugin-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--live);
+}
+
+.noc-trace-wrapper {
+  margin-top: 8px;
+  border-top: 1px dashed var(--border);
+  padding-top: 6px;
+}
+
+.noc-trace-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.noc-trace-toggle:hover {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--ink);
+}
+
+.noc-trace-icon {
+  font-size: 11px;
+  color: #d97706;
+}
+
+.noc-trace-compliance {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #059669;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.noc-trace-details {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-family: var(--font-data);
+}
+
+.noc-trace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.noc-trace-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.06);
+}
+
+.noc-trace-item:last-child {
+  border-bottom: none;
+}
+
+.noc-trace-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.noc-trace-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-faint);
+}
+
+.noc-trace-ms {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+

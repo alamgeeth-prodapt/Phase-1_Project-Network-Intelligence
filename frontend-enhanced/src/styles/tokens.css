@@ -1,0 +1,178 @@
+/*
+  Design tokens — Grid Field Atlas
+  --------------------------------
+  Concept: this app's whole subject is a literal grid of cells, so the
+  surface borrows from graph paper and survey atlases rather than a
+  generic dark ops console — a warm paper ground, a fine dot-grid texture,
+  ink-navy linework, and a single beacon-red used only for alerts/critical
+  states (echoing a tower warning light, not decoration). A secondary
+  signal-teal marks healthy/live states. Serif carries headlines like a
+  field manual's title plate; a plain grotesk carries UI text; monospace
+  is reserved for things that are genuinely tabular data.
+*/
+
+:root {
+  /* Surface */
+  --bg: #f3f1e9;
+  --paper-dot: #d9d5c4;
+  --panel: #faf9f4;
+  --panel-raised: #ffffff;
+  --border: #d6d2c2;
+  --border-strong: #b9b49d;
+
+  /* Text (ink) */
+  --ink: #26314a;
+  --text: #26314a;
+  --text-muted: #6b7189;
+  --text-faint: #9a9c8f;
+
+  /* Beacon accent (tower warning light — alerts/emphasis only) */
+  --beacon: #c1402f;
+  --beacon-dim: #f0d9d2;
+
+  /* Live/secondary accent */
+  --live: #2f7d6b;
+  --live-dim: #d9ebe4;
+
+  /* Activity heat scale (low -> high), mapped onto the two accents above */
+  --heat-low: #4d84a8;
+  --heat-mid: #cd8a35;
+  --heat-high: #c1402f;
+  --heat-critical: #8f2318;
+
+  /* Status */
+  --ok: #2f7d6b;
+  --warn: #cd8a35;
+  --critical: #c1402f;
+
+  /* Traffic-mix series (voice / sms / internet) — neutral data tones,
+     deliberately distinct from the status/heat colors above so a stacked
+     chart never reads as an alert. */
+  --series-voice: #4d84a8;
+  --series-sms: #6b5a8e;
+  --series-internet: #2f7d6b;
+  --series-baseline: #b9b49d;
+
+  /* Map tile-layer background (shown briefly while OSM tiles load) */
+  --map-bg: #e7e3d4;
+
+  /* Type */
+  --font-display: 'Spectral', Georgia, serif;
+  --font-ui: 'Work Sans', -apple-system, sans-serif;
+  --font-data: 'JetBrains Mono', 'SF Mono', monospace;
+
+  /* Scale */
+  --radius-sm: 3px;
+  --radius-md: 4px;
+
+  color-scheme: light;
+}
+
+/*
+  Dark variant — same paper/atlas concept, inverted: ink becomes the
+  ground instead of the linework, with the warm paper tone surviving only
+  as the text color. Built for long sessions (lower luminance, softer
+  contrast) rather than as a inverted-videogame theme, so the beacon/live
+  accents are brightened just enough to stay legible without turning
+  neon. Toggle by setting data-theme="dark" on <html> (see ThemeContext).
+*/
+[data-theme='dark'] {
+  /* Surface */
+  --bg: #1a1f2e;
+  --paper-dot: #262c40;
+  --panel: #212739;
+  --panel-raised: #262d42;
+  --border: #333c56;
+  --border-strong: #4a5473;
+
+  /* Text (ink) */
+  --ink: #ede9dc;
+  --text: #ede9dc;
+  --text-muted: #a3a8c2;
+  --text-faint: #6f7592;
+
+  /* Beacon accent — brightened for visibility on a dark ground */
+  --beacon: #e2604c;
+  --beacon-dim: #3a2420;
+
+  /* Live/secondary accent */
+  --live: #4bbfa3;
+  --live-dim: #1c3730;
+
+  /* Activity heat scale (low -> high) */
+  --heat-low: #5b9bc2;
+  --heat-mid: #e0a94a;
+  --heat-high: #e2604c;
+  --heat-critical: #ff5b45;
+
+  /* Status */
+  --ok: #4bbfa3;
+  --warn: #e0a94a;
+  --critical: #e2604c;
+
+  /* Traffic-mix series */
+  --series-voice: #5b9bc2;
+  --series-sms: #9884c2;
+  --series-internet: #4bbfa3;
+  --series-baseline: #4a5473;
+
+  /* Map tile-layer background */
+  --map-bg: #232a3d;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  background-image: radial-gradient(var(--paper-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--beacon-dim);
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--beacon);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.data {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}

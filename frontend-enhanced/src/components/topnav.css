@@ -1,0 +1,85 @@
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 58px;
+  padding: 0 22px;
+  background: var(--panel);
+  border-bottom: 2px solid var(--ink);
+  position: sticky;
+  top: 0;
+  z-index: 500;
+}
+
+.topnav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.topnav-links {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.topnav-link {
+  padding: 8px 12px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.topnav-link:hover {
+  color: var(--ink);
+}
+
+.topnav-link.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--beacon);
+  font-weight: 500;
+}
+
+.topnav-logout {
+  background: none;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-ui);
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.topnav-logout:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.topnav-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.topnav-theme-toggle:hover {
+  color: var(--beacon);
+  border-color: var(--ink);
+}
